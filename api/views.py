@@ -1,5 +1,6 @@
 import os
 import pickle
+import pathlib
 
 import numpy as np
 import pandas as pd
@@ -46,6 +47,8 @@ class DefaultResource(Resource):
         }
 
 
+
+
 class MakePredictions(Resource):
     """Make new predictions"""
     # @marshal_with(message_fields)
@@ -74,7 +77,7 @@ class MakePredictions(Resource):
         product_id = args['product_id']
         product_name = args['product_name']
 
-        # create a new dataset and make predictions
+        # create a new dataframe from the values passed in json
         datasets = make_new_dataframe(
             start_date,
             end_date,
@@ -87,34 +90,6 @@ class MakePredictions(Resource):
             price,
         )
 
-        """Write a function that calls the files uploaded to AWS S3 bucket.
-           But for now we would be working with local files until such 
-           options are available.
-           If the company_name is passed in json, it is used to filter out the 
-           the datasets from AWS S3 bucket
-        """
-
-        def load_files_from_aws(company_name):
-            pass
-
-        ords = os.path.join(basedir, "data/orders.csv")
-        trans = os.path.join(basedir, "data/transactions.csv")
-        prods = os.path.join(basedir, "data/products.csv")
-
-        # background task for model_training
-        background_task = xgboost_model.delay(ords, trans, prods, company_name)
-
-        datasets = make_new_dataframe(
-            start_date,
-            end_date,
-            product_name,
-            product_id,
-            category,
-            city,
-            state,
-            country,
-            price,
-        )
         train_data = datasets.copy()
         # apply feature engineering and make predictions
         train_data = feature_engineering(datasets)
@@ -134,31 +109,49 @@ class MakePredictions(Resource):
 
         train_data = xgb.DMatrix(train_data)
 
-        #load pickled model for company 
-        try:
-            filename = os.path.join(basedir, "models", f"pickled_model_{company_name}")
+       
+
+        #check if pickle model file exist before running background training and calling files from AWS
+        filename = os.path.join(basedir, "models", f"pickled_model_{company_name}")
+        path = pathlib.Path(filename)
+        if path.exists():
             model = open(filename, "rb")
             model = pickle.load(model)
-        except (FileNotFoundError):
-            raise ("model has not been trained, retry requests in few minute time")
+            results = model.predict(train_data)
+            datasets["forecasted_sales"] = results
+            datasets["quantity_predicted"] = round(
+                datasets["forecasted_sales"] / datasets["price"]
+            )
 
-        results = model.predict(train_data)
-        datasets["forecasted_sales"] = results
-        datasets["quantity_predicted"] = round(
-            datasets["forecasted_sales"] / datasets["price"]
-        )
-
-        # Datetime are not JSON serializabe, so we change dates to string
-        datasets["date"] = datasets["date"].dt.strftime("%Y-%b-%d")
-        results = datasets.to_dict(orient="list")
+            # Datetime are not JSON serializabe, so we change dates to string
+            datasets["date"] = datasets["date"].dt.strftime("%Y-%b-%d")
+            results = datasets.to_dict(orient="list")
         
-
-        if results:
             log.info("succesfully made new predictions")
             return {"status": "success", "data": results}, 200
+        
+        else:
+            """A function that calls the files uploaded to AWS S3 bucket.
+           But for now we would be working with local files until such 
+           options are available.
+           If the company_name is passed in json, it is used to filter out the 
+           the datasets from AWS S3 bucket
+            """
 
-        log.warning("failed to make new predictions ,sales model is still running,retry in few minute time")
-        return {"status": "failed"}, 400
+          
+            def load_files_from_aws(company_name):
+                """Function that loads files from AWS S3 Bucket"""
+                pass
+
+            ords = os.path.join(basedir, "data/orders.csv")
+            trans = os.path.join(basedir, "data/transactions.csv")
+            prods = os.path.join(basedir, "data/products.csv")
+
+            # background task for model_training
+            background_task = xgboost_model.delay(ords, trans, prods, company_name)
+
+            log.warning("failed to make new predictions ,sales model is still running,retry requests in few minute time")
+            return {"status": "failed"}, 400
 
 
 api.add_resource(DefaultResource, "/", endpoint="home")
