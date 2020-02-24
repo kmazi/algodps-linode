@@ -1,0 +1,27 @@
+1. Visit linode.com on the web, these are the login requirements.
+   username :algostacks-data-scientist
+   password : gjj467@1435#D
+
+2. 
+### Production app on Linode
+[URL](http://45.33.127.194/)
+
+
+### To work with the app via terminal(ssh into a server)
+> - SSH into the server by opening a terminal and typing this  ssh sales-pred@45.33.127.194
+> - If asked for a password type this -->  hello@##@12dAQWS
+> - If asked for a paraphrase  type this -->  hello
+> - cd into linode-sales-training-setup
+>- activate the virtualenv there by typing source linode_setup/bin/activate
+
+
+3. Explaining the task queuing module in the app.
+
+Following documenation on celery doc, while trying to set up celery for the app.
+
+1. I created a celery instance (celery_worker.py)
+2. I created celery configuration file (celeryconfig.py)
+
+
+
+

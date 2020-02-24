@@ -1,0 +1,14 @@
+
+celery==4.4.0
+flasgger==0.9.4
+Flask==1.0.2
+Flask-Cors==3.0.7
+Flask-RESTful==0.3.7
+numpy==1.18.1
+pandas==0.24.2
+python-dotenv==0.10.1
+redis==3.2.0
+scikit-learn==0.21.3
+xgboost==0.90
+xlrd==1.2.0
+
