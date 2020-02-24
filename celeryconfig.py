@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 
-import pandas as pd
 from celery.schedules import crontab
 
 from config import basedir

@@ -8,8 +8,8 @@ A flask app for training data sources with xgboost for sales prediction.
 
 
 ### To work with the app via linode
-> - SSH into the server by opening a terminal and typing this  ssh sales-pred@45.33.127.194
-> - If asked for a password type this  hello@##@12dAQWS
+> - SSH into the server by opening a terminal and typing this  ssh ####################
+> - If asked for a password type this  ###############
 > - cd into linode-sales-training-setup
 >- activate the virtualenv there by typing source linode_setup/bin/activate
 >- To pull in recent changes, just do `git pull`
